@@ -6,7 +6,7 @@
 <title>BEST DINING HALL?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=VT323&family=Bungee&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=VT323&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js" onerror="window.__qrFailed1=true"></script>
 <script>
   if (typeof QRCode === 'undefined') {
@@ -97,7 +97,7 @@
   }
 
   .marquee {
-    font-family: 'Bungee', sans-serif;
+    font-family: 'Archivo Black', sans-serif;
     font-size: clamp(44px, 8vw, 130px);
     line-height: 0.9;
     letter-spacing: -0.02em;
@@ -168,8 +168,9 @@
     align-items: center;
   }
   .race-rank {
-    font-family: 'Bungee', sans-serif;
-    font-size: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 36px;
     color: var(--amber);
     text-align: center;
   }
@@ -181,7 +182,7 @@
 
   .race-bar-wrap {
     position: relative;
-    height: 56px;
+    height: 72px;
   }
   .race-bar {
     height: 100%;
@@ -202,8 +203,8 @@
     top: 50%;
     transform: translateY(-50%);
     left: 16px;
-    font-family: 'Bungee', sans-serif;
-    font-size: clamp(20px, 2.2vw, 30px);
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(28px, 3vw, 44px);
     letter-spacing: 0.02em;
     z-index: 2;
     pointer-events: none;
@@ -263,7 +264,8 @@
     image-rendering: pixelated;
   }
   .arrow-down {
-    font-family: 'Bungee', sans-serif;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
     font-size: 28px;
     color: var(--hot);
     text-align: center;
@@ -302,7 +304,7 @@
     margin: 0 auto;
   }
   .voter h1 {
-    font-family: 'Bungee', sans-serif;
+    font-family: 'Archivo Black', sans-serif;
     font-size: clamp(32px, 9vw, 52px);
     line-height: 0.95;
     text-align: center;
@@ -326,9 +328,9 @@
     background: transparent;
     border: 2px solid var(--fg);
     color: var(--fg);
-    padding: 20px 24px;
-    font-family: 'Bungee', sans-serif;
-    font-size: 24px;
+    padding: 22px 24px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 28px;
     cursor: pointer;
     transition: all 0.15s;
     display: flex;
@@ -357,11 +359,13 @@
   }
 
   .vote-feedback {
-    font-family: 'Bungee', sans-serif;
-    font-size: 26px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 22px;
     text-align: center;
     color: var(--cool);
     min-height: 36px;
+    letter-spacing: 0.05em;
   }
   .vote-feedback.error { color: var(--hot); }
 
@@ -375,7 +379,7 @@
     color: var(--amber);
   }
   .current-leader .big {
-    font-family: 'Bungee', sans-serif;
+    font-family: 'Archivo Black', sans-serif;
     font-size: 32px;
     color: var(--cool);
     display: block;
@@ -389,8 +393,9 @@
     .display-main { grid-template-columns: 1fr; }
     .display { padding: 20px; gap: 20px; }
     .marquee { font-size: clamp(32px, 11vw, 70px); }
-    .race-label { font-size: 18px; }
-    .race-bar-wrap { height: 44px; }
+    .race-label { font-size: 22px; }
+    .race-bar-wrap { height: 52px; }
+    .race-rank { font-size: 26px; }
   }
 </style>
 </head>
