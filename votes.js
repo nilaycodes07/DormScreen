@@ -1,8 +1,8 @@
 // Cloudflare Pages Function: /api/votes
 // Storage: Cloudflare KV namespace bound as `VOTES`
-// Bot/spam protection: per-IP+meal cooldown via KV
+// One vote per IP per day across all halls.
 
-const COOLDOWN_SECONDS = 60 * 60 * 4; // one vote per IP per meal per 4 hours
+const HALLS = ['Wok', 'Taqueria', 'Triton Grill', 'Umi', 'Salad Bar'];
 
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -18,31 +18,50 @@ function validDate(s) {
   return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
 }
 
-function validMeal(s) {
-  return s === 'breakfast' || s === 'lunch' || s === 'dinner';
+function validHall(s) {
+  return HALLS.includes(s);
 }
 
-function emptyVotes() {
-  return { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+function emptyTally() {
+  const t = {};
+  HALLS.forEach(h => t[h] = 0);
+  return t;
 }
 
-// GET /api/votes?date=YYYY-MM-DD&meal=breakfast|lunch|dinner
+// Seconds until end of UTC day. KV expirationTtl will auto-delete the cooldown
+// entry at midnight, so users can vote again tomorrow without us cleaning up.
+function secondsUntilUtcMidnight() {
+  const now = new Date();
+  const tomorrow = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1,
+    0, 0, 0
+  ));
+  return Math.max(60, Math.floor((tomorrow - now) / 1000));
+}
+
+// GET /api/votes?date=YYYY-MM-DD
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
   const date = url.searchParams.get('date');
-  const meal = url.searchParams.get('meal');
 
-  if (!validDate(date) || !validMeal(meal)) {
+  if (!validDate(date)) {
     return jsonResponse({ error: 'bad params' }, 400);
   }
 
-  const key = `votes:${date}:${meal}`;
+  const key = `halls:${date}`;
   const raw = await env.VOTES.get(key);
-  const data = raw ? JSON.parse(raw) : emptyVotes();
-  return jsonResponse(data);
+  const data = raw ? JSON.parse(raw) : emptyTally();
+
+  // Backfill any missing hall keys (in case the list changes later)
+  const t = emptyTally();
+  HALLS.forEach(h => { if (typeof data[h] === 'number') t[h] = data[h]; });
+
+  return jsonResponse(t);
 }
 
-// POST /api/votes  { date, meal, stars }
+// POST /api/votes  { date, hall }
 export async function onRequestPost({ request, env }) {
   let body;
   try {
@@ -51,33 +70,34 @@ export async function onRequestPost({ request, env }) {
     return jsonResponse({ error: 'invalid json' }, 400);
   }
 
-  const { date, meal, stars } = body || {};
+  const { date, hall } = body || {};
 
-  if (!validDate(date) || !validMeal(meal)) {
-    return jsonResponse({ error: 'bad params' }, 400);
+  if (!validDate(date)) {
+    return jsonResponse({ error: 'bad date' }, 400);
   }
-  if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
-    return jsonResponse({ error: 'stars must be 1-5' }, 400);
+  if (!validHall(hall)) {
+    return jsonResponse({ error: 'unknown hall' }, 400);
   }
 
-  // Rate limit: one vote per IP per meal per cooldown window.
-  // CF-Connecting-IP is provided by Cloudflare on every request.
+  // Rate limit: one vote per IP per day, across all halls.
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const cooldownKey = `cooldown:${date}:${meal}:${ip}`;
+  const cooldownKey = `cooldown:${date}:${ip}`;
   const existing = await env.VOTES.get(cooldownKey);
   if (existing) {
-    return jsonResponse({ error: 'already voted for this meal' }, 429);
+    return jsonResponse({ error: 'already voted today' }, 429);
   }
 
-  // Read-modify-write the tally. KV is eventually consistent; for a dorm-scale
-  // poll this is fine. If two writes race, one increment may be lost — acceptable.
-  const key = `votes:${date}:${meal}`;
+  const key = `halls:${date}`;
   const raw = await env.VOTES.get(key);
-  const votes = raw ? JSON.parse(raw) : emptyVotes();
-  votes[stars] = (votes[stars] || 0) + 1;
+  const tally = raw ? JSON.parse(raw) : emptyTally();
+  tally[hall] = (tally[hall] || 0) + 1;
 
-  await env.VOTES.put(key, JSON.stringify(votes));
-  await env.VOTES.put(cooldownKey, '1', { expirationTtl: COOLDOWN_SECONDS });
+  // Persist. KV is eventually consistent; concurrent writes may rarely drop
+  // an increment. For dorm-scale traffic this is acceptable.
+  await env.VOTES.put(key, JSON.stringify(tally));
+  await env.VOTES.put(cooldownKey, '1', {
+    expirationTtl: secondsUntilUtcMidnight()
+  });
 
-  return jsonResponse(votes);
+  return jsonResponse(tally);
 }
