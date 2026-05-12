@@ -7,7 +7,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=Bungee&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js" onerror="window.__qrFailed1=true"></script>
+<script>
+  if (typeof QRCode === 'undefined') {
+    document.write('<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" onerror="window.__qrFailed2=true"><\/script>');
+  }
+</script>
 <style>
   :root {
     --bg: #0a0a0a;
@@ -594,17 +599,61 @@ async function renderDisplay() {
 function renderQR() {
   const voteUrl = location.origin + location.pathname + '?mode=vote';
   const box = document.getElementById('qr-box');
-  box.innerHTML = '';
-  const canvas = document.createElement('canvas');
-  box.appendChild(canvas);
-  QRCode.toCanvas(canvas, voteUrl, {
-    width: 320,
-    margin: 1,
-    color: { dark: '#0a0a0a', light: '#f5f5f0' }
-  }, function (error) {
-    if (error) console.error(error);
-  });
   document.getElementById('url-display').textContent = voteUrl;
+
+  // Strategy 1: Use the QRCode.js library if available
+  if (typeof QRCode !== 'undefined') {
+    box.innerHTML = '';
+    const canvas = document.createElement('canvas');
+    box.appendChild(canvas);
+    QRCode.toCanvas(canvas, voteUrl, {
+      width: 320,
+      margin: 1,
+      color: { dark: '#0a0a0a', light: '#f5f5f0' }
+    }, function (error) {
+      if (error) {
+        console.error('QR canvas render error:', error);
+        renderQRFallback(voteUrl);
+      }
+    });
+    return;
+  }
+
+  // Strategy 2: If library still loading, wait briefly and try again
+  if (!window.__qrTriedFallback) {
+    window.__qrTriedFallback = true;
+    box.innerHTML = '<div style="padding:40px;color:#0a0a0a;font-family:monospace;font-size:14px;">Loading QR...</div>';
+    setTimeout(renderQR, 800);
+    return;
+  }
+
+  // Strategy 3: Use image-based QR API as final fallback
+  renderQRFallback(voteUrl);
+}
+
+function renderQRFallback(voteUrl) {
+  const box = document.getElementById('qr-box');
+  const encoded = encodeURIComponent(voteUrl);
+  // Two independent image-based QR services as final fallbacks
+  const apis = [
+    `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encoded}&bgcolor=f5f5f0&color=0a0a0a&margin=10`,
+    `https://quickchart.io/qr?text=${encoded}&size=320&dark=0a0a0a&light=f5f5f0&margin=2`
+  ];
+  box.innerHTML = '';
+  const img = document.createElement('img');
+  img.alt = 'QR code';
+  img.style.cssText = 'display:block;width:100%;max-width:320px;height:auto;';
+  let apiIdx = 0;
+  img.onerror = function () {
+    apiIdx++;
+    if (apiIdx < apis.length) {
+      img.src = apis[apiIdx];
+    } else {
+      box.innerHTML = '<div style="padding:40px;color:#0a0a0a;font-family:monospace;font-size:13px;text-align:center;">QR unavailable.<br>Type URL below ↓</div>';
+    }
+  };
+  img.src = apis[0];
+  box.appendChild(img);
 }
 
 function initDisplay() {
