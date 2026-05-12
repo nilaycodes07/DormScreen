@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>HOW'S THE FOOD?</title>
+<title>BEST DINING HALL?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=Bungee&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -20,6 +20,8 @@
     --hot: #ff2e2e;
     --cool: #00ff9c;
     --amber: #ffb800;
+    --purple: #a855f7;
+    --blue: #3b82f6;
     --grid: rgba(245, 245, 240, 0.06);
   }
 
@@ -91,11 +93,12 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: 24px;
   }
 
   .marquee {
     font-family: 'Bungee', sans-serif;
-    font-size: clamp(48px, 9vw, 140px);
+    font-size: clamp(44px, 8vw, 130px);
     line-height: 0.9;
     letter-spacing: -0.02em;
   }
@@ -103,7 +106,7 @@
   .marquee .small {
     display: block;
     font-family: 'VT323', monospace;
-    font-size: clamp(20px, 2.5vw, 36px);
+    font-size: clamp(20px, 2.2vw, 32px);
     color: var(--amber);
     letter-spacing: 0.1em;
     margin-top: 12px;
@@ -115,6 +118,7 @@
     font-size: 22px;
     color: var(--cool);
     text-align: right;
+    white-space: nowrap;
   }
   .timestamp .blink::after {
     content: '_';
@@ -124,21 +128,21 @@
 
   .display-main {
     display: grid;
-    grid-template-columns: 1.4fr 1fr;
+    grid-template-columns: 1.6fr 1fr;
     gap: 40px;
     align-items: stretch;
   }
 
   .results-panel {
     border: 2px solid var(--fg);
-    padding: 32px;
+    padding: 28px 32px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 18px;
     position: relative;
   }
   .results-panel::before {
-    content: 'LIVE FEED';
+    content: "TODAY'S RACE";
     position: absolute;
     top: -12px;
     left: 20px;
@@ -149,58 +153,81 @@
     color: var(--hot);
   }
 
-  .verdict {
-    font-family: 'Bungee', sans-serif;
-    font-size: clamp(40px, 6vw, 88px);
-    line-height: 1;
-    text-align: center;
-    padding: 20px 0;
-  }
-  .verdict.cool { color: var(--cool); }
-  .verdict.amber { color: var(--amber); }
-  .verdict.hot { color: var(--hot); }
-
-  .score-big {
-    font-family: 'VT323', monospace;
-    font-size: clamp(80px, 14vw, 200px);
-    text-align: center;
-    line-height: 1;
-  }
-  .score-big .denom {
-    font-size: 0.4em;
-    opacity: 0.5;
-  }
-
-  .bars {
+  .race {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
+    flex: 1;
+    justify-content: center;
   }
-  .bar-row {
+
+  .race-row {
     display: grid;
-    grid-template-columns: 60px 1fr 60px;
-    gap: 12px;
+    grid-template-columns: 50px 1fr;
+    gap: 16px;
     align-items: center;
-    font-family: 'VT323', monospace;
-    font-size: 22px;
   }
-  .bar-label { color: var(--amber); }
-  .bar-track {
-    height: 18px;
-    background: rgba(245, 245, 240, 0.08);
-    border: 1px solid rgba(245, 245, 240, 0.2);
+  .race-rank {
+    font-family: 'Bungee', sans-serif;
+    font-size: 32px;
+    color: var(--amber);
+    text-align: center;
+  }
+  .race-row[data-rank="1"] .race-rank { color: var(--cool); }
+  .race-row[data-rank="2"] .race-rank { color: var(--fg); }
+  .race-row[data-rank="3"] .race-rank { color: var(--amber); }
+  .race-row[data-rank="4"] .race-rank,
+  .race-row[data-rank="5"] .race-rank { color: rgba(245,245,240,0.4); }
+
+  .race-bar-wrap {
     position: relative;
-    overflow: hidden;
+    height: 56px;
   }
-  .bar-fill {
+  .race-bar {
     height: 100%;
     background: var(--cool);
-    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 2px solid var(--fg);
+    transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    min-width: 4px;
+    position: relative;
   }
-  .bar-row[data-star="1"] .bar-fill,
-  .bar-row[data-star="2"] .bar-fill { background: var(--hot); }
-  .bar-row[data-star="3"] .bar-fill { background: var(--amber); }
-  .bar-count { text-align: right; opacity: 0.7; }
+  .race-row[data-rank="1"] .race-bar { background: var(--cool); }
+  .race-row[data-rank="2"] .race-bar { background: var(--blue); }
+  .race-row[data-rank="3"] .race-bar { background: var(--amber); }
+  .race-row[data-rank="4"] .race-bar { background: var(--purple); }
+  .race-row[data-rank="5"] .race-bar { background: var(--hot); }
+
+  .race-label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 16px;
+    font-family: 'Bungee', sans-serif;
+    font-size: clamp(20px, 2.2vw, 30px);
+    letter-spacing: 0.02em;
+    z-index: 2;
+    pointer-events: none;
+    white-space: nowrap;
+    color: var(--bg);
+    mix-blend-mode: difference;
+    filter: invert(1);
+  }
+  .race-count {
+    position: absolute;
+    top: 50%;
+    right: -8px;
+    transform: translate(100%, -50%);
+    font-family: 'VT323', monospace;
+    font-size: 26px;
+    color: var(--fg);
+    padding-left: 12px;
+    white-space: nowrap;
+  }
+  .race-count .pct {
+    color: rgba(245,245,240,0.5);
+    font-size: 0.7em;
+    margin-left: 6px;
+  }
 
   .qr-panel {
     border: 2px solid var(--fg);
@@ -228,7 +255,7 @@
     padding: 20px;
     line-height: 0;
   }
-  .qr-box canvas {
+  .qr-box canvas, .qr-box img {
     display: block;
     width: 100%;
     max-width: 320px;
@@ -270,123 +297,100 @@
     align-items: center;
     justify-content: center;
     padding: 24px;
-    gap: 32px;
+    gap: 24px;
     max-width: 500px;
     margin: 0 auto;
   }
   .voter h1 {
     font-family: 'Bungee', sans-serif;
-    font-size: clamp(36px, 10vw, 56px);
+    font-size: clamp(32px, 9vw, 52px);
     line-height: 0.95;
     text-align: center;
   }
   .voter h1 .accent { color: var(--hot); }
-  .voter .meal-tag {
+  .voter .date-tag {
     font-family: 'VT323', monospace;
-    font-size: 24px;
+    font-size: 22px;
     color: var(--amber);
     letter-spacing: 0.1em;
     text-align: center;
   }
 
-  .stars {
+  .hall-list {
     display: flex;
+    flex-direction: column;
     gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
+    width: 100%;
   }
-  .star-btn {
+  .hall-btn {
     background: transparent;
     border: 2px solid var(--fg);
     color: var(--fg);
-    width: 72px;
-    height: 72px;
+    padding: 20px 24px;
     font-family: 'Bungee', sans-serif;
-    font-size: 36px;
+    font-size: 24px;
     cursor: pointer;
     transition: all 0.15s;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
+    text-align: left;
+    letter-spacing: 0.02em;
   }
-  .star-btn:hover, .star-btn:active {
+  .hall-btn:hover, .hall-btn:active {
     transform: translate(-3px, -3px);
-    box-shadow: 6px 6px 0 var(--hot);
+    box-shadow: 6px 6px 0 var(--cool);
     background: var(--fg);
     color: var(--bg);
   }
-  .star-btn:disabled {
-    opacity: 0.3;
+  .hall-btn:disabled {
+    opacity: 0.4;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
   }
-
-  .star-labels {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
+  .hall-btn .small-rank {
     font-family: 'VT323', monospace;
-    font-size: 18px;
-    opacity: 0.7;
-    margin-top: -16px;
+    font-size: 16px;
+    opacity: 0.6;
+    margin-left: 12px;
   }
 
   .vote-feedback {
     font-family: 'Bungee', sans-serif;
-    font-size: 28px;
+    font-size: 26px;
     text-align: center;
     color: var(--cool);
-    min-height: 40px;
+    min-height: 36px;
   }
   .vote-feedback.error { color: var(--hot); }
 
-  .current-stats {
+  .current-leader {
     border-top: 1px dashed rgba(245, 245, 240, 0.3);
-    padding-top: 24px;
+    padding-top: 20px;
     width: 100%;
     text-align: center;
     font-family: 'VT323', monospace;
-    font-size: 22px;
+    font-size: 20px;
     color: var(--amber);
   }
-  .current-stats .big {
-    font-size: 48px;
+  .current-leader .big {
+    font-family: 'Bungee', sans-serif;
+    font-size: 32px;
     color: var(--cool);
     display: block;
-    margin-top: 4px;
-  }
-
-  .meal-selector {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 8px;
-  }
-  .meal-selector button {
-    background: transparent;
-    border: 1px solid rgba(245, 245, 240, 0.4);
-    color: var(--fg);
-    padding: 8px 14px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    text-transform: uppercase;
-  }
-  .meal-selector button.active {
-    background: var(--amber);
-    color: var(--bg);
-    border-color: var(--amber);
+    margin-top: 6px;
+    letter-spacing: 0.02em;
   }
 
   .hidden { display: none !important; }
 
   @media (max-width: 900px) {
     .display-main { grid-template-columns: 1fr; }
-    .display { padding: 20px; }
-    .marquee { font-size: clamp(36px, 12vw, 80px); }
+    .display { padding: 20px; gap: 20px; }
+    .marquee { font-size: clamp(32px, 11vw, 70px); }
+    .race-label { font-size: 18px; }
+    .race-bar-wrap { height: 44px; }
   }
 </style>
 </head>
@@ -400,23 +404,19 @@
 <section class="display" id="view-display">
   <header class="display-header">
     <h1 class="marquee">
-      HOW'S<br>
-      THE <span class="accent">FOOD</span>?
-      <span class="small">// DORM DINING INTEL // REAL-TIME</span>
+      BEST<br>
+      DINING <span class="accent">HALL</span>?
+      <span class="small">// UCSD // TODAY'S RACE // LIVE</span>
     </h1>
     <div class="timestamp">
       <div id="date-line">--</div>
-      <div id="meal-line" class="blink">--</div>
+      <div class="blink">> LIVE</div>
     </div>
   </header>
 
   <main class="display-main">
     <div class="results-panel">
-      <div class="verdict" id="verdict">AWAITING DATA</div>
-      <div class="score-big">
-        <span id="avg-score">--</span><span class="denom">/5</span>
-      </div>
-      <div class="bars" id="bars"></div>
+      <div class="race" id="race"></div>
     </div>
 
     <div class="qr-panel">
@@ -429,108 +429,85 @@
   <footer class="display-footer">
     <div>SYSTEM ONLINE</div>
     <div class="total-votes"><span id="total-votes">0</span> VOTES TODAY</div>
-    <div>REFRESH: 3s</div>
+    <div>RESETS @ MIDNIGHT</div>
   </footer>
 </section>
 
 <section class="voter hidden" id="view-voter">
-  <h1>RATE THE<br><span class="accent">FOOD</span>.</h1>
-  <div class="meal-tag" id="voter-date">--</div>
+  <h1>VOTE FOR<br>YOUR <span class="accent">DH</span>.</h1>
+  <div class="date-tag" id="voter-date">--</div>
 
-  <div class="meal-selector" id="meal-selector">
-    <button data-meal="breakfast">BREAKFAST</button>
-    <button data-meal="lunch">LUNCH</button>
-    <button data-meal="dinner">DINNER</button>
-  </div>
-
-  <div style="width: 100%;">
-    <div class="stars" id="star-buttons">
-      <button class="star-btn" data-star="1">1</button>
-      <button class="star-btn" data-star="2">2</button>
-      <button class="star-btn" data-star="3">3</button>
-      <button class="star-btn" data-star="4">4</button>
-      <button class="star-btn" data-star="5">5</button>
-    </div>
-    <div class="star-labels">
-      <span>INEDIBLE</span>
-      <span>SLAPS</span>
-    </div>
-  </div>
+  <div class="hall-list" id="hall-list"></div>
 
   <div class="vote-feedback" id="feedback">&nbsp;</div>
 
-  <div class="current-stats">
-    CURRENT AVERAGE
-    <span class="big" id="voter-avg">--</span>
-    <span id="voter-count">0 votes</span>
+  <div class="current-leader">
+    CURRENT LEADER
+    <span class="big" id="voter-leader">--</span>
+    <span id="voter-count">0 votes today</span>
   </div>
 </section>
 
 <script>
-// ============ UTILITIES ============
+const HALLS = ['Wok', 'Taqueria', 'Triton Grill', 'Umi', 'Salad Bar'];
+
 function todayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-function currentMeal() {
-  const h = new Date().getHours();
-  if (h < 10) return 'breakfast';
-  if (h < 15) return 'lunch';
-  return 'dinner';
-}
-
-// ============ API CALLS ============
-async function getVotes(date, meal) {
-  try {
-    const r = await fetch(`/api/votes?date=${date}&meal=${meal}`);
-    if (!r.ok) throw new Error('fetch failed');
-    return await r.json();
-  } catch (e) {
-    console.error('getVotes failed', e);
-    return { 1:0, 2:0, 3:0, 4:0, 5:0 };
-  }
-}
-
-async function addVote(date, meal, stars) {
-  try {
-    const r = await fetch('/api/votes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, meal, stars })
-    });
-    if (!r.ok) {
-      const err = await r.json().catch(() => ({}));
-      throw new Error(err.error || 'vote failed');
-    }
-    return await r.json();
-  } catch (e) {
-    console.error('addVote failed', e);
-    return null;
-  }
-}
-
-function computeStats(votes) {
-  const total = Object.values(votes).reduce((a,b)=>a+b, 0);
-  if (total === 0) return { avg: 0, total: 0, votes };
-  const sum = Object.entries(votes).reduce((s, [k,v]) => s + (+k)*v, 0);
-  return { avg: sum / total, total, votes };
-}
-
-function verdictFor(avg, total) {
-  if (total === 0) return { text: 'AWAITING VOTES', cls: 'amber' };
-  if (avg >= 4) return { text: 'IT SLAPS', cls: 'cool' };
-  if (avg >= 3) return { text: 'IT\'S FINE', cls: 'amber' };
-  if (avg >= 2) return { text: 'MID', cls: 'amber' };
-  if (avg >= 1.5) return { text: 'COOKED', cls: 'hot' };
-  return { text: 'INEDIBLE', cls: 'hot' };
 }
 
 function fmtDate() {
   return new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }).toUpperCase();
 }
 
-// ============ MODE ROUTING ============
+function emptyTally() {
+  const t = {};
+  HALLS.forEach(h => t[h] = 0);
+  return t;
+}
+
+async function getVotes(date) {
+  try {
+    const r = await fetch(`/api/votes?date=${date}`);
+    if (!r.ok) throw new Error('fetch failed');
+    const data = await r.json();
+    const t = emptyTally();
+    HALLS.forEach(h => { if (typeof data[h] === 'number') t[h] = data[h]; });
+    return t;
+  } catch (e) {
+    console.error('getVotes failed', e);
+    return emptyTally();
+  }
+}
+
+async function addVote(date, hall) {
+  try {
+    const r = await fetch('/api/votes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, hall })
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      return { ok: false, error: err.error || 'vote failed' };
+    }
+    return { ok: true, data: await r.json() };
+  } catch (e) {
+    console.error('addVote failed', e);
+    return { ok: false, error: 'network error' };
+  }
+}
+
+function rankedHalls(tally) {
+  return HALLS
+    .map(h => ({ hall: h, count: tally[h] || 0 }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function totalOf(tally) {
+  return Object.values(tally).reduce((a,b)=>a+b, 0);
+}
+
 const params = new URLSearchParams(location.search);
 const startMode = params.get('mode') === 'vote' ? 'voter' : 'display';
 
@@ -558,42 +535,36 @@ function switchTo(mode) {
 btnDisplay.addEventListener('click', () => switchTo('display'));
 btnVoter.addEventListener('click', () => switchTo('voter'));
 
-// ============ DISPLAY VIEW ============
 let displayInterval = null;
 
 async function renderDisplay() {
-  const date = todayKey();
-  const meal = currentMeal();
-
   document.getElementById('date-line').textContent = fmtDate();
-  document.getElementById('meal-line').textContent = '> ' + meal.toUpperCase();
 
-  const votes = await getVotes(date, meal);
-  const { avg, total } = computeStats(votes);
-
-  const v = verdictFor(avg, total);
-  const verdictEl = document.getElementById('verdict');
-  verdictEl.textContent = v.text;
-  verdictEl.className = 'verdict ' + v.cls;
-  document.getElementById('avg-score').textContent = total === 0 ? '--' : avg.toFixed(1);
+  const tally = await getVotes(todayKey());
+  const total = totalOf(tally);
   document.getElementById('total-votes').textContent = total;
 
-  const max = Math.max(...Object.values(votes), 1);
-  const bars = document.getElementById('bars');
-  bars.innerHTML = '';
-  for (let s = 5; s >= 1; s--) {
-    const cnt = votes[s] || 0;
-    const pct = total === 0 ? 0 : (cnt / max) * 100;
+  const ranked = rankedHalls(tally);
+  const max = Math.max(...ranked.map(r => r.count), 1);
+
+  const race = document.getElementById('race');
+  race.innerHTML = '';
+  ranked.forEach((r, i) => {
+    const pct = total === 0 ? 0 : Math.round((r.count / total) * 100);
+    const barW = total === 0 ? 4 : Math.max((r.count / max) * 100, 2);
     const row = document.createElement('div');
-    row.className = 'bar-row';
-    row.dataset.star = s;
+    row.className = 'race-row';
+    row.dataset.rank = i + 1;
     row.innerHTML = `
-      <div class="bar-label">${'★'.repeat(s)}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-      <div class="bar-count">${cnt}</div>
+      <div class="race-rank">${i + 1}</div>
+      <div class="race-bar-wrap">
+        <div class="race-bar" style="width:${barW}%"></div>
+        <div class="race-label">${r.hall.toUpperCase()}</div>
+        <div class="race-count">${r.count}<span class="pct">${total === 0 ? '' : pct + '%'}</span></div>
+      </div>
     `;
-    bars.appendChild(row);
-  }
+    race.appendChild(row);
+  });
 }
 
 function renderQR() {
@@ -601,7 +572,6 @@ function renderQR() {
   const box = document.getElementById('qr-box');
   document.getElementById('url-display').textContent = voteUrl;
 
-  // Strategy 1: Use the QRCode.js library if available
   if (typeof QRCode !== 'undefined') {
     box.innerHTML = '';
     const canvas = document.createElement('canvas');
@@ -619,7 +589,6 @@ function renderQR() {
     return;
   }
 
-  // Strategy 2: If library still loading, wait briefly and try again
   if (!window.__qrTriedFallback) {
     window.__qrTriedFallback = true;
     box.innerHTML = '<div style="padding:40px;color:#0a0a0a;font-family:monospace;font-size:14px;">Loading QR...</div>';
@@ -627,14 +596,12 @@ function renderQR() {
     return;
   }
 
-  // Strategy 3: Use image-based QR API as final fallback
   renderQRFallback(voteUrl);
 }
 
 function renderQRFallback(voteUrl) {
   const box = document.getElementById('qr-box');
   const encoded = encodeURIComponent(voteUrl);
-  // Two independent image-based QR services as final fallbacks
   const apis = [
     `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encoded}&bgcolor=f5f5f0&color=0a0a0a&margin=10`,
     `https://quickchart.io/qr?text=${encoded}&size=320&dark=0a0a0a&light=f5f5f0&margin=2`
@@ -663,63 +630,74 @@ function initDisplay() {
   displayInterval = setInterval(renderDisplay, 3000);
 }
 
-// ============ VOTER VIEW ============
-let selectedMeal = currentMeal();
 let hasVoted = false;
 
 async function refreshVoterStats() {
-  const date = todayKey();
-  const votes = await getVotes(date, selectedMeal);
-  const { avg, total } = computeStats(votes);
-  document.getElementById('voter-avg').textContent = total === 0 ? '--' : avg.toFixed(1) + '/5';
-  document.getElementById('voter-count').textContent = total + (total === 1 ? ' vote' : ' votes');
+  const tally = await getVotes(todayKey());
+  const total = totalOf(tally);
+  const ranked = rankedHalls(tally);
+
+  if (total === 0) {
+    document.getElementById('voter-leader').textContent = '—';
+    document.getElementById('voter-count').textContent = '0 votes today';
+  } else {
+    document.getElementById('voter-leader').textContent = ranked[0].hall.toUpperCase();
+    document.getElementById('voter-count').textContent =
+      `${ranked[0].count} of ${total} ${total === 1 ? 'vote' : 'votes'}`;
+  }
+
+  HALLS.forEach((hall) => {
+    const el = document.querySelector(`.hall-btn[data-hall="${hall}"] .small-rank`);
+    if (!el) return;
+    const rank = ranked.findIndex(r => r.hall === hall) + 1;
+    const count = tally[hall] || 0;
+    el.textContent = total === 0 ? '0 votes' : `#${rank} · ${count}`;
+  });
 }
 
-function updateMealButtons() {
-  document.querySelectorAll('#meal-selector button').forEach(b => {
-    b.classList.toggle('active', b.dataset.meal === selectedMeal);
-  });
-  document.getElementById('voter-date').textContent =
-    `// ${fmtDate()} / ${selectedMeal.toUpperCase()} //`;
-}
-
-function initVoter() {
-  selectedMeal = currentMeal();
-  hasVoted = false;
-  updateMealButtons();
-  refreshVoterStats();
-  document.getElementById('feedback').textContent = '\u00A0';
-
-  document.querySelectorAll('#meal-selector button').forEach(btn => {
-    btn.onclick = () => {
-      selectedMeal = btn.dataset.meal;
-      hasVoted = false;
-      document.querySelectorAll('.star-btn').forEach(b => b.disabled = false);
-      document.getElementById('feedback').textContent = '\u00A0';
-      updateMealButtons();
-      refreshVoterStats();
-    };
-  });
-
-  document.querySelectorAll('.star-btn').forEach(btn => {
+function buildHallButtons() {
+  const list = document.getElementById('hall-list');
+  list.innerHTML = '';
+  HALLS.forEach(hall => {
+    const btn = document.createElement('button');
+    btn.className = 'hall-btn';
+    btn.dataset.hall = hall;
+    btn.innerHTML = `
+      <span>${hall.toUpperCase()}</span>
+      <span class="small-rank">--</span>
+    `;
     btn.onclick = async () => {
       if (hasVoted) return;
-      const stars = +btn.dataset.star;
       const fb = document.getElementById('feedback');
       fb.classList.remove('error');
       fb.textContent = 'SUBMITTING...';
-      const result = await addVote(todayKey(), selectedMeal, stars);
-      if (result) {
+      const result = await addVote(todayKey(), hall);
+      if (result.ok) {
         hasVoted = true;
-        document.querySelectorAll('.star-btn').forEach(b => b.disabled = true);
-        fb.textContent = stars >= 4 ? 'BASED. THANKS.' : stars >= 3 ? 'NOTED.' : 'BRUTAL. NOTED.';
+        document.querySelectorAll('.hall-btn').forEach(b => b.disabled = true);
+        fb.textContent = `LOCKED IN: ${hall.toUpperCase()}`;
         refreshVoterStats();
       } else {
         fb.classList.add('error');
-        fb.textContent = 'FAILED. TRY AGAIN.';
+        if (result.error && result.error.toLowerCase().includes('already')) {
+          fb.textContent = 'ALREADY VOTED TODAY';
+          hasVoted = true;
+          document.querySelectorAll('.hall-btn').forEach(b => b.disabled = true);
+        } else {
+          fb.textContent = 'FAILED. TRY AGAIN.';
+        }
       }
     };
+    list.appendChild(btn);
   });
+}
+
+function initVoter() {
+  hasVoted = false;
+  document.getElementById('voter-date').textContent = `// ${fmtDate()} //`;
+  document.getElementById('feedback').textContent = '\u00A0';
+  buildHallButtons();
+  refreshVoterStats();
 }
 
 switchTo(startMode);
