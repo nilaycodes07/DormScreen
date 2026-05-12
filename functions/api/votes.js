@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BEST DINING HALL?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=VT323&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js" onerror="window.__qrFailed1=true"></script>
+<script>
+  if (typeof QRCode === 'undefined') {
+    document.write('<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" onerror="window.__qrFailed2=true"><\/script>');
+  }
+</script>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --fg: #f5f5f0;
+    --hot: #ff2e2e;
+    --cool: #00ff9c;
+    --amber: #ffb800;
+    --purple: #a855f7;
+    --blue: #3b82f6;
+    --grid: rgba(245, 245, 240, 0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.08) 3px,
+      rgba(0,0,0,0) 4px
+    );
+    z-index: 1000;
+  }
+
+  .mode-switch {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 100;
+    display: flex;
+    gap: 8px;
+  }
+  .mode-switch button {
+    background: transparent;
+    border: 1px solid var(--fg);
+    color: var(--fg);
+    padding: 8px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .mode-switch button.active {
+    background: var(--fg);
+    color: var(--bg);
+  }
+
+  .display {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 40px;
+    gap: 32px;
+  }
+
+  .display-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .marquee {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(44px, 8vw, 130px);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+  }
+  .marquee .accent { color: var(--hot); }
+  .marquee .small {
+    display: block;
+    font-family: 'VT323', monospace;
+    font-size: clamp(20px, 2.2vw, 32px);
+    color: var(--amber);
+    letter-spacing: 0.1em;
+    margin-top: 12px;
+    font-weight: normal;
+  }
+
+  .timestamp {
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    color: var(--cool);
+    text-align: right;
+    white-space: nowrap;
+  }
+  .timestamp .blink::after {
+    content: '_';
+    animation: blink 1s infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .display-main {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 40px;
+    align-items: stretch;
+  }
+
+  .results-panel {
+    border: 2px solid var(--fg);
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    position: relative;
+  }
+  .results-panel::before {
+    content: "TODAY'S RACE";
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 12px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--hot);
+  }
+
+  .race {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .race-row {
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: 16px;
+    align-items: center;
+  }
+  .race-rank {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 36px;
+    color: var(--amber);
+    text-align: center;
+  }
+  .race-row[data-rank="1"] .race-rank { color: var(--cool); }
+  .race-row[data-rank="2"] .race-rank { color: var(--fg); }
+  .race-row[data-rank="3"] .race-rank { color: var(--amber); }
+  .race-row[data-rank="4"] .race-rank,
+  .race-row[data-rank="5"] .race-rank { color: rgba(245,245,240,0.4); }
+
+  .race-bar-wrap {
+    position: relative;
+    height: 72px;
+  }
+  .race-bar {
+    height: 100%;
+    background: var(--cool);
+    border: 2px solid var(--fg);
+    transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    min-width: 4px;
+    position: relative;
+  }
+  .race-row[data-rank="1"] .race-bar { background: var(--cool); }
+  .race-row[data-rank="2"] .race-bar { background: var(--blue); }
+  .race-row[data-rank="3"] .race-bar { background: var(--amber); }
+  .race-row[data-rank="4"] .race-bar { background: var(--purple); }
+  .race-row[data-rank="5"] .race-bar { background: var(--hot); }
+
+  .race-label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 16px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(28px, 3vw, 44px);
+    letter-spacing: 0.02em;
+    z-index: 2;
+    pointer-events: none;
+    white-space: nowrap;
+    color: var(--bg);
+    mix-blend-mode: difference;
+    filter: invert(1);
+  }
+  .race-count {
+    position: absolute;
+    top: 50%;
+    right: -8px;
+    transform: translate(100%, -50%);
+    font-family: 'VT323', monospace;
+    font-size: 26px;
+    color: var(--fg);
+    padding-left: 12px;
+    white-space: nowrap;
+  }
+  .race-count .pct {
+    color: rgba(245,245,240,0.5);
+    font-size: 0.7em;
+    margin-left: 6px;
+  }
+
+  .qr-panel {
+    border: 2px solid var(--fg);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .qr-panel::before {
+    content: 'SCAN TO VOTE';
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 12px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--cool);
+  }
+  .qr-box {
+    background: var(--fg);
+    padding: 20px;
+    line-height: 0;
+  }
+  .qr-box canvas, .qr-box img {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    image-rendering: pixelated;
+  }
+  .arrow-down {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--hot);
+    text-align: center;
+    letter-spacing: 0.1em;
+  }
+  .url-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    word-break: break-all;
+    text-align: center;
+    opacity: 0.6;
+    max-width: 300px;
+  }
+
+  .display-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: var(--amber);
+    border-top: 1px dashed rgba(245, 245, 240, 0.3);
+    padding-top: 16px;
+  }
+  .total-votes { color: var(--cool); }
+
+  .voter {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    gap: 24px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .voter h1 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(32px, 9vw, 52px);
+    line-height: 0.95;
+    text-align: center;
+  }
+  .voter h1 .accent { color: var(--hot); }
+  .voter .date-tag {
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    color: var(--amber);
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+
+  .hall-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+  .hall-btn {
+    background: transparent;
+    border: 2px solid var(--fg);
+    color: var(--fg);
+    padding: 22px 24px;
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 28px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    letter-spacing: 0.02em;
+  }
+  .hall-btn:hover, .hall-btn:active {
+    transform: translate(-3px, -3px);
+    box-shadow: 6px 6px 0 var(--cool);
+    background: var(--fg);
+    color: var(--bg);
+  }
+  .hall-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  .hall-btn .small-rank {
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    opacity: 0.6;
+    margin-left: 12px;
+  }
+
+  .vote-feedback {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 22px;
+    text-align: center;
+    color: var(--cool);
+    min-height: 36px;
+    letter-spacing: 0.05em;
+  }
+  .vote-feedback.error { color: var(--hot); }
+
+  .current-leader {
+    border-top: 1px dashed rgba(245, 245, 240, 0.3);
+    padding-top: 20px;
+    width: 100%;
+    text-align: center;
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: var(--amber);
+  }
+  .current-leader .big {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 32px;
+    color: var(--cool);
+    display: block;
+    margin-top: 6px;
+    letter-spacing: 0.02em;
+  }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 900px) {
+    .display-main { grid-template-columns: 1fr; }
+    .display { padding: 20px; gap: 20px; }
+    .marquee { font-size: clamp(32px, 11vw, 70px); }
+    .race-label { font-size: 22px; }
+    .race-bar-wrap { height: 52px; }
+    .race-rank { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mode-switch">
+  <button id="btn-display" class="active">▣ DISPLAY</button>
+  <button id="btn-voter">★ VOTE</button>
+</div>
+
+<section class="display" id="view-display">
+  <header class="display-header">
+    <h1 class="marquee">
+      BEST<br>
+      DINING <span class="accent">HALL</span>?
+      <span class="small">// UCSD // TODAY'S RACE // LIVE</span>
+    </h1>
+    <div class="timestamp">
+      <div id="date-line">--</div>
+      <div class="blink">> LIVE</div>
+    </div>
+  </header>
+
+  <main class="display-main">
+    <div class="results-panel">
+      <div class="race" id="race"></div>
+    </div>
+
+    <div class="qr-panel">
+      <div class="arrow-down">▼ SCAN ▼</div>
+      <div class="qr-box" id="qr-box"></div>
+      <div class="url-display" id="url-display"></div>
+    </div>
+  </main>
+
+  <footer class="display-footer">
+    <div>SYSTEM ONLINE</div>
+    <div class="total-votes"><span id="total-votes">0</span> VOTES TODAY</div>
+    <div>RESETS @ MIDNIGHT</div>
+  </footer>
+</section>
+
+<section class="voter hidden" id="view-voter">
+  <h1>VOTE FOR<br>YOUR <span class="accent">DH</span>.</h1>
+  <div class="date-tag" id="voter-date">--</div>
+
+  <div class="hall-list" id="hall-list"></div>
+
+  <div class="vote-feedback" id="feedback">&nbsp;</div>
+
+  <div class="current-leader">
+    CURRENT LEADER
+    <span class="big" id="voter-leader">--</span>
+    <span id="voter-count">0 votes today</span>
+  </div>
+</section>
+
+<script>
+const HALLS = ['Wok', 'Taqueria', 'Triton Grill', 'Umi', 'Salad Bar'];
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function fmtDate() {
+  return new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }).toUpperCase();
+}
+
+function emptyTally() {
+  const t = {};
+  HALLS.forEach(h => t[h] = 0);
+  return t;
+}
+
+async function getVotes(date) {
+  try {
+    const r = await fetch(`/api/votes?date=${date}`);
+    if (!r.ok) throw new Error('fetch failed');
+    const data = await r.json();
+    const t = emptyTally();
+    HALLS.forEach(h => { if (typeof data[h] === 'number') t[h] = data[h]; });
+    return t;
+  } catch (e) {
+    console.error('getVotes failed', e);
+    return emptyTally();
+  }
+}
+
+async function addVote(date, hall) {
+  try {
+    const r = await fetch('/api/votes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, hall })
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      return { ok: false, error: err.error || 'vote failed' };
+    }
+    return { ok: true, data: await r.json() };
+  } catch (e) {
+    console.error('addVote failed', e);
+    return { ok: false, error: 'network error' };
+  }
+}
+
+function rankedHalls(tally) {
+  return HALLS
+    .map(h => ({ hall: h, count: tally[h] || 0 }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function totalOf(tally) {
+  return Object.values(tally).reduce((a,b)=>a+b, 0);
+}
+
+const params = new URLSearchParams(location.search);
+const startMode = params.get('mode') === 'vote' ? 'voter' : 'display';
+
+const viewDisplay = document.getElementById('view-display');
+const viewVoter = document.getElementById('view-voter');
+const btnDisplay = document.getElementById('btn-display');
+const btnVoter = document.getElementById('btn-voter');
+
+function switchTo(mode) {
+  if (mode === 'voter') {
+    viewDisplay.classList.add('hidden');
+    viewVoter.classList.remove('hidden');
+    btnVoter.classList.add('active');
+    btnDisplay.classList.remove('active');
+    initVoter();
+  } else {
+    viewVoter.classList.add('hidden');
+    viewDisplay.classList.remove('hidden');
+    btnDisplay.classList.add('active');
+    btnVoter.classList.remove('active');
+    initDisplay();
+  }
+}
+
+btnDisplay.addEventListener('click', () => switchTo('display'));
+btnVoter.addEventListener('click', () => switchTo('voter'));
+
+let displayInterval = null;
+
+async function renderDisplay() {
+  document.getElementById('date-line').textContent = fmtDate();
+
+  const tally = await getVotes(todayKey());
+  const total = totalOf(tally);
+  document.getElementById('total-votes').textContent = total;
+
+  const ranked = rankedHalls(tally);
+  const max = Math.max(...ranked.map(r => r.count), 1);
+
+  const race = document.getElementById('race');
+  race.innerHTML = '';
+  ranked.forEach((r, i) => {
+    const pct = total === 0 ? 0 : Math.round((r.count / total) * 100);
+    const barW = total === 0 ? 4 : Math.max((r.count / max) * 100, 2);
+    const row = document.createElement('div');
+    row.className = 'race-row';
+    row.dataset.rank = i + 1;
+    row.innerHTML = `
+      <div class="race-rank">${i + 1}</div>
+      <div class="race-bar-wrap">
+        <div class="race-bar" style="width:${barW}%"></div>
+        <div class="race-label">${r.hall.toUpperCase()}</div>
+        <div class="race-count">${r.count}<span class="pct">${total === 0 ? '' : pct + '%'}</span></div>
+      </div>
+    `;
+    race.appendChild(row);
+  });
+}
+
+function renderQR() {
+  const voteUrl = location.origin + location.pathname + '?mode=vote';
+  const box = document.getElementById('qr-box');
+  document.getElementById('url-display').textContent = voteUrl;
+
+  if (typeof QRCode !== 'undefined') {
+    box.innerHTML = '';
+    const canvas = document.createElement('canvas');
+    box.appendChild(canvas);
+    QRCode.toCanvas(canvas, voteUrl, {
+      width: 320,
+      margin: 1,
+      color: { dark: '#0a0a0a', light: '#f5f5f0' }
+    }, function (error) {
+      if (error) {
+        console.error('QR canvas render error:', error);
+        renderQRFallback(voteUrl);
+      }
+    });
+    return;
+  }
+
+  if (!window.__qrTriedFallback) {
+    window.__qrTriedFallback = true;
+    box.innerHTML = '<div style="padding:40px;color:#0a0a0a;font-family:monospace;font-size:14px;">Loading QR...</div>';
+    setTimeout(renderQR, 800);
+    return;
+  }
+
+  renderQRFallback(voteUrl);
+}
+
+function renderQRFallback(voteUrl) {
+  const box = document.getElementById('qr-box');
+  const encoded = encodeURIComponent(voteUrl);
+  const apis = [
+    `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encoded}&bgcolor=f5f5f0&color=0a0a0a&margin=10`,
+    `https://quickchart.io/qr?text=${encoded}&size=320&dark=0a0a0a&light=f5f5f0&margin=2`
+  ];
+  box.innerHTML = '';
+  const img = document.createElement('img');
+  img.alt = 'QR code';
+  img.style.cssText = 'display:block;width:100%;max-width:320px;height:auto;';
+  let apiIdx = 0;
+  img.onerror = function () {
+    apiIdx++;
+    if (apiIdx < apis.length) {
+      img.src = apis[apiIdx];
+    } else {
+      box.innerHTML = '<div style="padding:40px;color:#0a0a0a;font-family:monospace;font-size:13px;text-align:center;">QR unavailable.<br>Type URL below ↓</div>';
+    }
+  };
+  img.src = apis[0];
+  box.appendChild(img);
+}
+
+function initDisplay() {
+  if (displayInterval) clearInterval(displayInterval);
+  renderQR();
+  renderDisplay();
+  displayInterval = setInterval(renderDisplay, 3000);
+}
+
+let hasVoted = false;
+
+async function refreshVoterStats() {
+  const tally = await getVotes(todayKey());
+  const total = totalOf(tally);
+  const ranked = rankedHalls(tally);
+
+  if (total === 0) {
+    document.getElementById('voter-leader').textContent = '—';
+    document.getElementById('voter-count').textContent = '0 votes today';
+  } else {
+    document.getElementById('voter-leader').textContent = ranked[0].hall.toUpperCase();
+    document.getElementById('voter-count').textContent =
+      `${ranked[0].count} of ${total} ${total === 1 ? 'vote' : 'votes'}`;
+  }
+
+  HALLS.forEach((hall) => {
+    const el = document.querySelector(`.hall-btn[data-hall="${hall}"] .small-rank`);
+    if (!el) return;
+    const rank = ranked.findIndex(r => r.hall === hall) + 1;
+    const count = tally[hall] || 0;
+    el.textContent = total === 0 ? '0 votes' : `#${rank} · ${count}`;
+  });
+}
+
+function buildHallButtons() {
+  const list = document.getElementById('hall-list');
+  list.innerHTML = '';
+  HALLS.forEach(hall => {
+    const btn = document.createElement('button');
+    btn.className = 'hall-btn';
+    btn.dataset.hall = hall;
+    btn.innerHTML = `
+      <span>${hall.toUpperCase()}</span>
+      <span class="small-rank">--</span>
+    `;
+    btn.onclick = async () => {
+      if (hasVoted) return;
+      const fb = document.getElementById('feedback');
+      fb.classList.remove('error');
+      fb.textContent = 'SUBMITTING...';
+      const result = await addVote(todayKey(), hall);
+      if (result.ok) {
+        hasVoted = true;
+        document.querySelectorAll('.hall-btn').forEach(b => b.disabled = true);
+        fb.textContent = `LOCKED IN: ${hall.toUpperCase()}`;
+        refreshVoterStats();
+      } else {
+        fb.classList.add('error');
+        if (result.error && result.error.toLowerCase().includes('already')) {
+          fb.textContent = 'ALREADY VOTED TODAY';
+          hasVoted = true;
+          document.querySelectorAll('.hall-btn').forEach(b => b.disabled = true);
+        } else {
+          fb.textContent = 'FAILED. TRY AGAIN.';
+        }
+      }
+    };
+    list.appendChild(btn);
+  });
+}
+
+function initVoter() {
+  hasVoted = false;
+  document.getElementById('voter-date').textContent = `// ${fmtDate()} //`;
+  document.getElementById('feedback').textContent = '\u00A0';
+  buildHallButtons();
+  refreshVoterStats();
+}
+
+switchTo(startMode);
+</script>
+
+</body>
+</html>
