@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HOW'S THE FOOD?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Bungee&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --fg: #f5f5f0;
+    --hot: #ff2e2e;
+    --cool: #00ff9c;
+    --amber: #ffb800;
+    --grid: rgba(245, 245, 240, 0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.08) 3px,
+      rgba(0,0,0,0) 4px
+    );
+    z-index: 1000;
+  }
+
+  .mode-switch {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 100;
+    display: flex;
+    gap: 8px;
+  }
+  .mode-switch button {
+    background: transparent;
+    border: 1px solid var(--fg);
+    color: var(--fg);
+    padding: 8px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .mode-switch button.active {
+    background: var(--fg);
+    color: var(--bg);
+  }
+
+  .display {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 40px;
+    gap: 32px;
+  }
+
+  .display-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .marquee {
+    font-family: 'Bungee', sans-serif;
+    font-size: clamp(48px, 9vw, 140px);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+  }
+  .marquee .accent { color: var(--hot); }
+  .marquee .small {
+    display: block;
+    font-family: 'VT323', monospace;
+    font-size: clamp(20px, 2.5vw, 36px);
+    color: var(--amber);
+    letter-spacing: 0.1em;
+    margin-top: 12px;
+    font-weight: normal;
+  }
+
+  .timestamp {
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    color: var(--cool);
+    text-align: right;
+  }
+  .timestamp .blink::after {
+    content: '_';
+    animation: blink 1s infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .display-main {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 40px;
+    align-items: stretch;
+  }
+
+  .results-panel {
+    border: 2px solid var(--fg);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    position: relative;
+  }
+  .results-panel::before {
+    content: 'LIVE FEED';
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 12px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--hot);
+  }
+
+  .verdict {
+    font-family: 'Bungee', sans-serif;
+    font-size: clamp(40px, 6vw, 88px);
+    line-height: 1;
+    text-align: center;
+    padding: 20px 0;
+  }
+  .verdict.cool { color: var(--cool); }
+  .verdict.amber { color: var(--amber); }
+  .verdict.hot { color: var(--hot); }
+
+  .score-big {
+    font-family: 'VT323', monospace;
+    font-size: clamp(80px, 14vw, 200px);
+    text-align: center;
+    line-height: 1;
+  }
+  .score-big .denom {
+    font-size: 0.4em;
+    opacity: 0.5;
+  }
+
+  .bars {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 60px;
+    gap: 12px;
+    align-items: center;
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+  }
+  .bar-label { color: var(--amber); }
+  .bar-track {
+    height: 18px;
+    background: rgba(245, 245, 240, 0.08);
+    border: 1px solid rgba(245, 245, 240, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--cool);
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .bar-row[data-star="1"] .bar-fill,
+  .bar-row[data-star="2"] .bar-fill { background: var(--hot); }
+  .bar-row[data-star="3"] .bar-fill { background: var(--amber); }
+  .bar-count { text-align: right; opacity: 0.7; }
+
+  .qr-panel {
+    border: 2px solid var(--fg);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .qr-panel::before {
+    content: 'SCAN TO VOTE';
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 12px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--cool);
+  }
+  .qr-box {
+    background: var(--fg);
+    padding: 20px;
+    line-height: 0;
+  }
+  .qr-box canvas {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    image-rendering: pixelated;
+  }
+  .arrow-down {
+    font-family: 'Bungee', sans-serif;
+    font-size: 28px;
+    color: var(--hot);
+    text-align: center;
+    letter-spacing: 0.1em;
+  }
+  .url-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    word-break: break-all;
+    text-align: center;
+    opacity: 0.6;
+    max-width: 300px;
+  }
+
+  .display-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: var(--amber);
+    border-top: 1px dashed rgba(245, 245, 240, 0.3);
+    padding-top: 16px;
+  }
+  .total-votes { color: var(--cool); }
+
+  .voter {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    gap: 32px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .voter h1 {
+    font-family: 'Bungee', sans-serif;
+    font-size: clamp(36px, 10vw, 56px);
+    line-height: 0.95;
+    text-align: center;
+  }
+  .voter h1 .accent { color: var(--hot); }
+  .voter .meal-tag {
+    font-family: 'VT323', monospace;
+    font-size: 24px;
+    color: var(--amber);
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+
+  .stars {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .star-btn {
+    background: transparent;
+    border: 2px solid var(--fg);
+    color: var(--fg);
+    width: 72px;
+    height: 72px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 36px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .star-btn:hover, .star-btn:active {
+    transform: translate(-3px, -3px);
+    box-shadow: 6px 6px 0 var(--hot);
+    background: var(--fg);
+    color: var(--bg);
+  }
+  .star-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .star-labels {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    opacity: 0.7;
+    margin-top: -16px;
+  }
+
+  .vote-feedback {
+    font-family: 'Bungee', sans-serif;
+    font-size: 28px;
+    text-align: center;
+    color: var(--cool);
+    min-height: 40px;
+  }
+  .vote-feedback.error { color: var(--hot); }
+
+  .current-stats {
+    border-top: 1px dashed rgba(245, 245, 240, 0.3);
+    padding-top: 24px;
+    width: 100%;
+    text-align: center;
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    color: var(--amber);
+  }
+  .current-stats .big {
+    font-size: 48px;
+    color: var(--cool);
+    display: block;
+    margin-top: 4px;
+  }
+
+  .meal-selector {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .meal-selector button {
+    background: transparent;
+    border: 1px solid rgba(245, 245, 240, 0.4);
+    color: var(--fg);
+    padding: 8px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .meal-selector button.active {
+    background: var(--amber);
+    color: var(--bg);
+    border-color: var(--amber);
+  }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 900px) {
+    .display-main { grid-template-columns: 1fr; }
+    .display { padding: 20px; }
+    .marquee { font-size: clamp(36px, 12vw, 80px); }
+  }
+</style>
+</head>
+<body>
+
+<div class="mode-switch">
+  <button id="btn-display" class="active">▣ DISPLAY</button>
+  <button id="btn-voter">★ VOTE</button>
+</div>
+
+<section class="display" id="view-display">
+  <header class="display-header">
+    <h1 class="marquee">
+      HOW'S<br>
+      THE <span class="accent">FOOD</span>?
+      <span class="small">// DORM DINING INTEL // REAL-TIME</span>
+    </h1>
+    <div class="timestamp">
+      <div id="date-line">--</div>
+      <div id="meal-line" class="blink">--</div>
+    </div>
+  </header>
+
+  <main class="display-main">
+    <div class="results-panel">
+      <div class="verdict" id="verdict">AWAITING DATA</div>
+      <div class="score-big">
+        <span id="avg-score">--</span><span class="denom">/5</span>
+      </div>
+      <div class="bars" id="bars"></div>
+    </div>
+
+    <div class="qr-panel">
+      <div class="arrow-down">▼ SCAN ▼</div>
+      <div class="qr-box" id="qr-box"></div>
+      <div class="url-display" id="url-display"></div>
+    </div>
+  </main>
+
+  <footer class="display-footer">
+    <div>SYSTEM ONLINE</div>
+    <div class="total-votes"><span id="total-votes">0</span> VOTES TODAY</div>
+    <div>REFRESH: 3s</div>
+  </footer>
+</section>
+
+<section class="voter hidden" id="view-voter">
+  <h1>RATE THE<br><span class="accent">FOOD</span>.</h1>
+  <div class="meal-tag" id="voter-date">--</div>
+
+  <div class="meal-selector" id="meal-selector">
+    <button data-meal="breakfast">BREAKFAST</button>
+    <button data-meal="lunch">LUNCH</button>
+    <button data-meal="dinner">DINNER</button>
+  </div>
+
+  <div style="width: 100%;">
+    <div class="stars" id="star-buttons">
+      <button class="star-btn" data-star="1">1</button>
+      <button class="star-btn" data-star="2">2</button>
+      <button class="star-btn" data-star="3">3</button>
+      <button class="star-btn" data-star="4">4</button>
+      <button class="star-btn" data-star="5">5</button>
+    </div>
+    <div class="star-labels">
+      <span>INEDIBLE</span>
+      <span>SLAPS</span>
+    </div>
+  </div>
+
+  <div class="vote-feedback" id="feedback">&nbsp;</div>
+
+  <div class="current-stats">
+    CURRENT AVERAGE
+    <span class="big" id="voter-avg">--</span>
+    <span id="voter-count">0 votes</span>
+  </div>
+</section>
+
+<script>
+// ============ UTILITIES ============
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function currentMeal() {
+  const h = new Date().getHours();
+  if (h < 10) return 'breakfast';
+  if (h < 15) return 'lunch';
+  return 'dinner';
+}
+
+// ============ API CALLS ============
+async function getVotes(date, meal) {
+  try {
+    const r = await fetch(`/api/votes?date=${date}&meal=${meal}`);
+    if (!r.ok) throw new Error('fetch failed');
+    return await r.json();
+  } catch (e) {
+    console.error('getVotes failed', e);
+    return { 1:0, 2:0, 3:0, 4:0, 5:0 };
+  }
+}
+
+async function addVote(date, meal, stars) {
+  try {
+    const r = await fetch('/api/votes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, meal, stars })
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.error || 'vote failed');
+    }
+    return await r.json();
+  } catch (e) {
+    console.error('addVote failed', e);
+    return null;
+  }
+}
+
+function computeStats(votes) {
+  const total = Object.values(votes).reduce((a,b)=>a+b, 0);
+  if (total === 0) return { avg: 0, total: 0, votes };
+  const sum = Object.entries(votes).reduce((s, [k,v]) => s + (+k)*v, 0);
+  return { avg: sum / total, total, votes };
+}
+
+function verdictFor(avg, total) {
+  if (total === 0) return { text: 'AWAITING VOTES', cls: 'amber' };
+  if (avg >= 4) return { text: 'IT SLAPS', cls: 'cool' };
+  if (avg >= 3) return { text: 'IT\'S FINE', cls: 'amber' };
+  if (avg >= 2) return { text: 'MID', cls: 'amber' };
+  if (avg >= 1.5) return { text: 'COOKED', cls: 'hot' };
+  return { text: 'INEDIBLE', cls: 'hot' };
+}
+
+function fmtDate() {
+  return new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }).toUpperCase();
+}
+
+// ============ MODE ROUTING ============
+const params = new URLSearchParams(location.search);
+const startMode = params.get('mode') === 'vote' ? 'voter' : 'display';
+
+const viewDisplay = document.getElementById('view-display');
+const viewVoter = document.getElementById('view-voter');
+const btnDisplay = document.getElementById('btn-display');
+const btnVoter = document.getElementById('btn-voter');
+
+function switchTo(mode) {
+  if (mode === 'voter') {
+    viewDisplay.classList.add('hidden');
+    viewVoter.classList.remove('hidden');
+    btnVoter.classList.add('active');
+    btnDisplay.classList.remove('active');
+    initVoter();
+  } else {
+    viewVoter.classList.add('hidden');
+    viewDisplay.classList.remove('hidden');
+    btnDisplay.classList.add('active');
+    btnVoter.classList.remove('active');
+    initDisplay();
+  }
+}
+
+btnDisplay.addEventListener('click', () => switchTo('display'));
+btnVoter.addEventListener('click', () => switchTo('voter'));
+
+// ============ DISPLAY VIEW ============
+let displayInterval = null;
+
+async function renderDisplay() {
+  const date = todayKey();
+  const meal = currentMeal();
+
+  document.getElementById('date-line').textContent = fmtDate();
+  document.getElementById('meal-line').textContent = '> ' + meal.toUpperCase();
+
+  const votes = await getVotes(date, meal);
+  const { avg, total } = computeStats(votes);
+
+  const v = verdictFor(avg, total);
+  const verdictEl = document.getElementById('verdict');
+  verdictEl.textContent = v.text;
+  verdictEl.className = 'verdict ' + v.cls;
+  document.getElementById('avg-score').textContent = total === 0 ? '--' : avg.toFixed(1);
+  document.getElementById('total-votes').textContent = total;
+
+  const max = Math.max(...Object.values(votes), 1);
+  const bars = document.getElementById('bars');
+  bars.innerHTML = '';
+  for (let s = 5; s >= 1; s--) {
+    const cnt = votes[s] || 0;
+    const pct = total === 0 ? 0 : (cnt / max) * 100;
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.dataset.star = s;
+    row.innerHTML = `
+      <div class="bar-label">${'★'.repeat(s)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <div class="bar-count">${cnt}</div>
+    `;
+    bars.appendChild(row);
+  }
+}
+
+function renderQR() {
+  const voteUrl = location.origin + location.pathname + '?mode=vote';
+  const box = document.getElementById('qr-box');
+  box.innerHTML = '';
+  const canvas = document.createElement('canvas');
+  box.appendChild(canvas);
+  QRCode.toCanvas(canvas, voteUrl, {
+    width: 320,
+    margin: 1,
+    color: { dark: '#0a0a0a', light: '#f5f5f0' }
+  }, function (error) {
+    if (error) console.error(error);
+  });
+  document.getElementById('url-display').textContent = voteUrl;
+}
+
+function initDisplay() {
+  if (displayInterval) clearInterval(displayInterval);
+  renderQR();
+  renderDisplay();
+  displayInterval = setInterval(renderDisplay, 3000);
+}
+
+// ============ VOTER VIEW ============
+let selectedMeal = currentMeal();
+let hasVoted = false;
+
+async function refreshVoterStats() {
+  const date = todayKey();
+  const votes = await getVotes(date, selectedMeal);
+  const { avg, total } = computeStats(votes);
+  document.getElementById('voter-avg').textContent = total === 0 ? '--' : avg.toFixed(1) + '/5';
+  document.getElementById('voter-count').textContent = total + (total === 1 ? ' vote' : ' votes');
+}
+
+function updateMealButtons() {
+  document.querySelectorAll('#meal-selector button').forEach(b => {
+    b.classList.toggle('active', b.dataset.meal === selectedMeal);
+  });
+  document.getElementById('voter-date').textContent =
+    `// ${fmtDate()} / ${selectedMeal.toUpperCase()} //`;
+}
+
+function initVoter() {
+  selectedMeal = currentMeal();
+  hasVoted = false;
+  updateMealButtons();
+  refreshVoterStats();
+  document.getElementById('feedback').textContent = '\u00A0';
+
+  document.querySelectorAll('#meal-selector button').forEach(btn => {
+    btn.onclick = () => {
+      selectedMeal = btn.dataset.meal;
+      hasVoted = false;
+      document.querySelectorAll('.star-btn').forEach(b => b.disabled = false);
+      document.getElementById('feedback').textContent = '\u00A0';
+      updateMealButtons();
+      refreshVoterStats();
+    };
+  });
+
+  document.querySelectorAll('.star-btn').forEach(btn => {
+    btn.onclick = async () => {
+      if (hasVoted) return;
+      const stars = +btn.dataset.star;
+      const fb = document.getElementById('feedback');
+      fb.classList.remove('error');
+      fb.textContent = 'SUBMITTING...';
+      const result = await addVote(todayKey(), selectedMeal, stars);
+      if (result) {
+        hasVoted = true;
+        document.querySelectorAll('.star-btn').forEach(b => b.disabled = true);
+        fb.textContent = stars >= 4 ? 'BASED. THANKS.' : stars >= 3 ? 'NOTED.' : 'BRUTAL. NOTED.';
+        refreshVoterStats();
+      } else {
+        fb.classList.add('error');
+        fb.textContent = 'FAILED. TRY AGAIN.';
+      }
+    };
+  });
+}
+
+switchTo(startMode);
+</script>
+
+</body>
+</html>
